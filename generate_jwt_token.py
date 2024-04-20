@@ -1,42 +1,51 @@
-import json
 import jwt
-from cryptography.fernet import Fernet
+import sqlite3
+from datetime import datetime, timedelta
 
-# Function to read JSON data from a file
-def read_json_file(file_path):
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-    return data
+# Function to generate JWT token with SQL payload
+def generate_jwt_payload():
 
-# Function to encrypt JSON data
-def encrypt_json(data, cipher):
-    json_data = json.dumps(data).encode('utf-8')
-    encrypted_data = cipher.encrypt(json_data)
-    return encrypted_data
+    conn = sqlite3.connect("shaw_university.db")
+    cursor = conn.cursor()
 
-# Secret key for encryption
-secret_key = Fernet.generate_key()
-cipher_suite = Fernet(secret_key)
+    # Execute SQL queries to retrieve data from all tables
+    cursor.execute("SELECT * FROM staff")
+    staff_data = cursor.fetchall()
 
-# File paths for JSON files
-file_paths = [
-    r"senior-project-spring-2024\Senior Project Data\internship.json",
-    r"senior-project-spring-2024\Senior Project Data\news.json",
-    r"senior-project-spring-2024\Senior Project Data\staff.json"
-]
+    cursor.execute("SELECT * FROM internships")
+    internships_data = cursor.fetchall()
 
-# Dictionary to store JSON data
-json_data = {}
+    cursor.execute("SELECT * FROM students")
+    students_data = cursor.fetchall()
 
-# Read data from each JSON file
-for file_path in file_paths:
-    data = read_json_file(file_path)
-    json_data.update(data)
+    cursor.execute("SELECT * FROM news")
+    news_data = cursor.fetchall()
 
-# Encrypt the JSON data
-encrypted_data = encrypt_json(json_data, cipher_suite)
+    cursor.execute("SELECT * FROM statistics")
+    statistics_data = cursor.fetchall()
 
-# Encode the encrypted data into a JWT token
-token = jwt.encode({"data": encrypted_data}, secret_key, algorithm='HS256')
+    # Close database connection
+    conn.close()
 
-print("JWT Token:", token)
+    # Payload to be encrypted
+    payload = {
+        'staff_data': staff_data,
+        'internships_data': internships_data,
+        'students_data': students_data,
+        'news_data': news_data,
+        'statistics_data': statistics_data,
+        'exp': datetime.utcnow() + timedelta(hours=1)  # Token expiration time
+    }
+
+
+    secret_key = 'Maurille_Was_Not_Here_teehee'
+
+    # Generate JWT token with payload using PyJWT library
+    jwt_token = jwt.encode(payload, secret_key, algorithm='HS256')
+
+    return jwt_token
+
+
+if __name__ == "__main__":
+    jwt_token = generate_jwt_payload()
+    print("JWT Token:", jwt_token.decode())
