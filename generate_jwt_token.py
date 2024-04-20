@@ -48,4 +48,4 @@ def generate_jwt_payload():
 
 if __name__ == "__main__":
     jwt_token = generate_jwt_payload()
-    print("JWT Token:", jwt_token.decode())
+    print("JWT Token:", jwt_token)
